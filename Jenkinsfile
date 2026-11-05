@@ -13,6 +13,8 @@ pipeline {
     environment {
         REGISTRY = 'registry.assign.109952234.300.ops:5000'
         IMAGE    = "${REGISTRY}/ops300/bind-secondary"
+        TRIVY_SEVERITY = 'HIGH,CRITICAL'
+        TRIVY_EXIT_CODE = '1'
     }
 
     stages {
@@ -22,6 +24,37 @@ pipeline {
                     env.TAG = "${env.BUILD_NUMBER}"
                 }
                 sh 'podman build --network host -t "$IMAGE:$TAG" -t "$IMAGE:latest" .'
+            }
+        }
+
+        stage('Scan image for CVEs') {
+            steps {
+                sh '''
+                    set -eu
+                    mkdir -p "$HOME/.cache/trivy"
+                    podman save -o image.tar "$IMAGE:$TAG"
+                    trivy image \
+                        --cache-dir "$HOME/.cache/trivy" \
+                        --severity "$TRIVY_SEVERITY" \
+                        --scanners vuln \
+                        --format table \
+                        --output trivy-report.txt \
+                        --input image.tar
+                    cat trivy-report.txt
+                    trivy image \
+                        --cache-dir "$HOME/.cache/trivy" \
+                        --severity "$TRIVY_SEVERITY" \
+                        --scanners vuln \
+                        --exit-code "$TRIVY_EXIT_CODE" \
+                        --no-progress \
+                        --input image.tar
+                    rm -f image.tar
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
+                }
             }
         }
 
