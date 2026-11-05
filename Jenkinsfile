@@ -21,7 +21,7 @@ pipeline {
                 script {
                     env.TAG = "${env.BUILD_NUMBER}"
                 }
-                sh 'podman build --network host -t "$IMAGE:$TAG" .'
+                sh 'podman build --network host -t "$IMAGE:$TAG" -t "$IMAGE:latest" .'
             }
         }
 
@@ -36,6 +36,7 @@ pipeline {
                         set -eu
                         printf '%s' "$REG_PASS" | podman login "$REGISTRY" -u "$REG_USER" --password-stdin
                         podman push "$IMAGE:$TAG"
+                        podman push "$IMAGE:latest"
                     '''
                 }
             }
