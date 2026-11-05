@@ -1,0 +1,13 @@
+zone "lab.109952234.300.ops" {
+    type secondary;
+    primaries { 192.168.14.10; };
+    file "/var/cache/bind/db.lab.109952234.300.ops";
+    allow-notify { 192.168.14.10; 10.0.2.0/24; };
+};
+
+zone "14.168.192.in-addr.arpa" {
+    type secondary;
+    primaries { 192.168.14.10; };
+    file "/var/cache/bind/db.14.168.192.in-addr.arpa";
+    allow-notify { 192.168.14.10; 10.0.2.0/24; };
+};
